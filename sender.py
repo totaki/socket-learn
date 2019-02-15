@@ -18,7 +18,7 @@ async def tcp_echo_client(int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
     writer.write(message.encode())
     data = await reader.read(100)
     float_delta = time.time() - float_start
-    print('{:>10.6f} | {:>10}'.format(float_delta, data.decode()))
+    print('{:>10.6f} | {:0>4} | {:>10}'.format(float_delta, int_id, data.decode()))
     writer.close()
 
 
