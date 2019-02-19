@@ -11,9 +11,10 @@ LIST_INT_RUN_FLAG = [True]
 LIST_INT_CURRENT_ID = [1]
 
 
-async def tcp_client(int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
+async def tcp_client(int_max_delay: int, int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
+    await asyncio.sleep(random.randint(1, int_max_delay))
     float_start = time.time()
-    obj_reader, obj_writer = await asyncio.open_connection('127.0.0.1', 8888, loop=event_loop)
+    obj_reader, obj_writer = await asyncio.open_connection('127.0.0.1', 8080, loop=event_loop)
     str_message = '{:0>4}'.format(int_id)
     obj_writer.write(str_message.encode())
     b_data = await obj_reader.read(100)
@@ -25,9 +26,10 @@ async def tcp_client(int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
 async def sender_loop(event_loop: 'asyncio.AbstractEventLoop', int_max_delay: int):
     while LIST_INT_RUN_FLAG[0]:
         int_id = LIST_INT_CURRENT_ID[0]
-        await asyncio.create_task(tcp_client(int_id, event_loop))
+        # Короче тут мы прекращаем выполнение и ждем когда задача закончится. Надо сделать по настоящему асинхронно
+        await asyncio.create_task(tcp_client(int_max_delay, int_id, event_loop))
         LIST_INT_CURRENT_ID[0] += 1
-        await asyncio.sleep(random.randint(1, int_max_delay))
+        await asyncio.sleep(0.1)
 
 
 def main(int_max_delay: int):
