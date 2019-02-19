@@ -11,21 +11,21 @@ LIST_INT_RUN_FLAG = [True]
 LIST_INT_CURRENT_ID = [1]
 
 
-async def tcp_echo_client(int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
+async def tcp_client(int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
     float_start = time.time()
-    reader, writer = await asyncio.open_connection('127.0.0.1', 8888, loop=event_loop)
-    message = '{:0>4}'.format(int_id)
-    writer.write(message.encode())
-    data = await reader.read(100)
+    obj_reader, obj_writer = await asyncio.open_connection('127.0.0.1', 8888, loop=event_loop)
+    str_message = '{:0>4}'.format(int_id)
+    obj_writer.write(str_message.encode())
+    b_data = await obj_reader.read(100)
     float_delta = time.time() - float_start
-    print('{:>10.6f} | {:>10}'.format(float_delta, data.decode()))
-    writer.close()
+    print('{:>10.6f} | {} | {:>10}'.format(float_delta, str_message, b_data.decode()))
+    obj_writer.close()
 
 
 async def sender_loop(event_loop: 'asyncio.AbstractEventLoop', int_max_delay: int):
     while LIST_INT_RUN_FLAG[0]:
         int_id = LIST_INT_CURRENT_ID[0]
-        await asyncio.create_task(tcp_echo_client(int_id, event_loop))
+        await asyncio.create_task(tcp_client(int_id, event_loop))
         LIST_INT_CURRENT_ID[0] += 1
         await asyncio.sleep(random.randint(1, int_max_delay))
 

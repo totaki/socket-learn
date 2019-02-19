@@ -3,32 +3,38 @@
 времени в районе от 5 до 10 секунд с шагом 1 секунду сообщение echo: {id запроса}
 """
 import asyncio
+import argparse
+import random
 
 
-async def handle_echo(reader, writer):
-    data = await reader.read(100)
-    message = data.decode()
-    addr = writer.get_extra_info('peername')
-    print("Received %r from %r" % (message, addr))
-
-    print("Send: %r" % message)
-    writer.write(b'echo: %s' % data)
-    await writer.drain()
-
-    print("Close the client socket")
-    writer.close()
-
-loop = asyncio.get_event_loop()
-coro = asyncio.start_server(handle_echo, '127.0.0.1', 8888, loop=loop)
-server = loop.run_until_complete(coro)
+def get_handler(int_max_delay: int):
+    async def handler(reader, writer):
+        bs_data = await reader.read(100)
+        str_message = bs_data.decode()
+        int_sleep_time = random.randint(1, int_max_delay)
+        print('from {} | sleep: {:>2}'.format(str_message, int_sleep_time))
+        await asyncio.sleep(int_sleep_time)
+        writer.write(b'echo: %s' % bs_data)
+        await writer.drain()
+        writer.close()
+    return handler
 
 
-print('Serving on {}'.format(server.sockets[0].getsockname()))
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    pass
-finally:
-    server.close()
-    loop.run_until_complete(server.wait_closed())
-    loop.close()
+def main(int_max_delay: int):
+    loop = asyncio.get_event_loop()
+    try:
+        obj_server = asyncio.start_server(get_handler(int_max_delay), '127.0.0.1', 8888, loop=loop)
+        future_server = loop.run_until_complete(obj_server)
+        loop.run_forever()
+    except KeyboardInterrupt:
+        future_server.close()
+        loop.run_until_complete(future_server.wait_closed())
+    finally:
+        loop.close()
+
+
+if __name__ == '__main__':
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument('max_delay', type=int)
+    namespace = argument_parser.parse_args()
+    main(namespace.max_delay)
