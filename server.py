@@ -15,9 +15,18 @@ import socket
 import select
 
 list_out_connections = []
+dict_polled_connections = {}
 dict_in_connections = {}
 dict_requests = {}
 dict_responses = {}
+
+
+def get_connection():
+    obj_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    obj_socket.connect(('localhost', 8888))
+    obj_socket.setblocking(0)
+    obj_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    return obj_socket
 
 
 def main():
@@ -26,7 +35,6 @@ def main():
     EPOLLOUT 4
     EPOLLHUP 16
     """
-    EOL2 = b'\n\r\n'
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -37,38 +45,63 @@ def main():
 
     epoll = select.epoll(100)
     epoll.register(server_socket.fileno(), select.EPOLLIN)
+    list_out_connections.extend([get_connection() for i in range(2)])
     try:
-        connections = {}; requests = {}; responses = {}
         while True:
             events = epoll.poll(0)
             for fileno, event in events:
-                print(event, fileno)
                 if fileno == server_socket.fileno():
                     connection, address = server_socket.accept()
                     connection.setblocking(0)
                     epoll.register(connection.fileno(), select.EPOLLIN)
-                    connections[connection.fileno()] = connection
-                    requests[connection.fileno()] = b''
-                    responses[connection.fileno()] = b'busy: '
-                elif event & select.EPOLLIN:
+                    dict_in_connections[connection.fileno()] = connection
+                    dict_requests[connection.fileno()] = b''
+                    dict_responses[connection.fileno()] = b'busy: '
 
-                    obj_connection = connections[fileno]
-                    # Тут мы специальн читаем по 2 байта чтобы показать, что можем вычитывать не все за раз
-                    bs_data = obj_connection.recv(2)
-                    responses[obj_connection.fileno()] += bs_data
-                    if len(responses[obj_connection.fileno()]) == 10:
-                        epoll.modify(fileno, select.EPOLLOUT)
+                elif event & select.EPOLLIN:
+                    if fileno in dict_polled_connections:
+                        dict_request_data = dict_polled_connections.pop(fileno)
+                        bs_data = dict_request_data['conn'].recv(10)
+                        dict_responses[dict_request_data['fileno']] = bs_data
+                        epoll.modify(dict_request_data['fileno'], select.EPOLLOUT)
+                        epoll.unregister(fileno)
+                        list_out_connections.append(dict_request_data['conn'])
+                    else:
+                        obj_connection = dict_in_connections[fileno]
+                        # Тут мы специальн читаем по 2 байта чтобы показать, что можем вычитывать не все за раз
+                        bs_data = obj_connection.recv(2)
+                        dict_responses[obj_connection.fileno()] += bs_data
+                        if len(dict_responses[obj_connection.fileno()]) == 10:
+                            if len(list_out_connections):
+                                # Забираем одно подкючение ставим его на out, добавляем в словарь для отсылки данных вместе
+                                # с даннами и туда же кладем конект в который потом надо написать.
+                                connection = list_out_connections.pop()
+                                dict_polled_connections[connection.fileno()] = {
+                                    'data': dict_responses[obj_connection.fileno()][6:],
+                                    'fileno': obj_connection.fileno(),
+                                    'conn': connection
+                                }
+                                epoll.register(connection.fileno(), select.EPOLLOUT)
+                            else:
+                                # Если подключений нет отправляем busy
+                                epoll.modify(fileno, select.EPOLLOUT)
 
                 elif event & select.EPOLLOUT:
-                    byteswritten = connections[fileno].send(responses[fileno])
-                    responses[fileno] = responses[fileno][byteswritten:]
-                    if len(responses[fileno]) == 0:
-                        epoll.modify(fileno, 0)
-                        connections[fileno].shutdown(socket.SHUT_RDWR)
+                    # Проверяем если мы сокет в готовых к посылке данных сокатаъ
+                    if fileno in dict_polled_connections:
+                        dict_polled_connections[fileno]['conn'].send(dict_polled_connections[fileno]['data'])
+                        epoll.modify(fileno, select.EPOLLIN)
+                    else:
+                        byteswritten = dict_in_connections[fileno].send(dict_responses[fileno])
+                        dict_responses[fileno] = dict_responses[fileno][byteswritten:]
+                        if len(dict_responses[fileno]) == 0:
+                            epoll.modify(fileno, 0)
+                            dict_in_connections[fileno].shutdown(socket.SHUT_RDWR)
+
                 elif event & select.EPOLLHUP:
                     epoll.unregister(fileno)
-                    connections[fileno].close()
-                    del connections[fileno]
+                    dict_in_connections[fileno].close()
+                    del dict_in_connections[fileno]
     finally:
         epoll.unregister(server_socket.fileno())
         epoll.close()

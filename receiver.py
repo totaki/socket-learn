@@ -9,14 +9,15 @@ import random
 
 def get_handler(int_max_delay: int):
     async def handler(reader, writer):
-        bs_data = await reader.read(100)
-        str_message = bs_data.decode()
-        int_sleep_time = random.randint(1, int_max_delay)
-        print('from {} | sleep: {:>2}'.format(str_message, int_sleep_time))
-        await asyncio.sleep(int_sleep_time)
-        writer.write(b'echo: %s' % bs_data)
-        await writer.drain()
-        writer.close()
+        print('Accept connection')
+        while True:
+            bs_data = await reader.read(100)
+            str_message = bs_data.decode()
+            int_sleep_time = random.randint(1, int_max_delay)
+            print('from {} | sleep: {:>2}'.format(str_message, int_sleep_time))
+            await asyncio.sleep(int_sleep_time)
+            writer.write(b'echo: %s' % bs_data)
+            await writer.drain()
     return handler
 
 
