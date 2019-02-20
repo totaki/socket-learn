@@ -1,0 +1,325 @@
+Receiver
+from 0001 | sleep:  5
+from 0002 | sleep:  5
+from 0005 | sleep:  1
+from 0007 | sleep:  5
+from 0008 | sleep:  5
+from 0012 | sleep:  2
+from 0015 | sleep:  4
+from 0016 | sleep:  1
+from 0019 | sleep:  4
+from 0018 | sleep:  2
+from 0021 | sleep:  5
+from 0023 | sleep:  4
+from 0026 | sleep:  3
+from 0027 | sleep:  4
+from 0030 | sleep:  3
+from 0032 | sleep:  3
+from 0033 | sleep:  1
+from 0035 | sleep:  3
+from 0037 | sleep:  4
+from 0039 | sleep:  2
+from 0040 | sleep:  4
+from 0041 | sleep:  1
+from 0042 | sleep:  1
+from 0046 | sleep:  2
+from 0045 | sleep:  1
+from 0047 | sleep:  3
+from 0048 | sleep:  1
+from 0049 | sleep:  3
+from 0050 | sleep:  2
+from 0052 | sleep:  2
+
+Sender
+0.000427 | 0003 | busy: 0003
+0.000409 | 0004 | busy: 0004
+5.003962 | 0001 | echo: 0001
+0.000585 | 0006 | busy: 0006
+5.002408 | 0002 | echo: 0002
+1.001562 | 0005 | echo: 0005
+0.000439 | 0009 | busy: 0009
+0.000819 | 0010 | busy: 0010
+0.000632 | 0011 | busy: 0011
+5.004641 | 0007 | echo: 0007
+0.000582 | 0013 | busy: 0013
+0.000473 | 0014 | busy: 0014
+5.002831 | 0008 | echo: 0008
+2.001056 | 0012 | echo: 0012
+0.000486 | 0017 | busy: 0017
+1.001674 | 0016 | echo: 0016
+4.002805 | 0015 | echo: 0015
+0.000447 | 0020 | busy: 0020
+0.000463 | 0022 | busy: 0022
+2.003029 | 0018 | echo: 0018
+4.001632 | 0019 | echo: 0019
+0.000620 | 0024 | busy: 0024
+0.000464 | 0025 | busy: 0025
+5.003815 | 0021 | echo: 0021
+4.001846 | 0023 | echo: 0023
+0.000530 | 0029 | busy: 0029
+0.000425 | 0028 | busy: 0028
+3.002358 | 0026 | echo: 0026
+0.000381 | 0031 | busy: 0031
+4.002340 | 0027 | echo: 0027
+3.002919 | 0030 | echo: 0030
+0.000469 | 0034 | busy: 0034
+1.002218 | 0033 | echo: 0033
+3.002120 | 0032 | echo: 0032
+0.000445 | 0036 | busy: 0036
+0.000423 | 0038 | busy: 0038
+3.003053 | 0035 | echo: 0035
+4.001958 | 0037 | echo: 0037
+2.001202 | 0039 | echo: 0039
+1.001436 | 0041 | echo: 0041
+0.000351 | 0044 | busy: 0044
+0.000560 | 0043 | busy: 0043
+1.001590 | 0042 | echo: 0042
+4.002354 | 0040 | echo: 0040
+1.001642 | 0045 | echo: 0045
+2.001427 | 0046 | echo: 0046
+1.001892 | 0048 | echo: 0048
+3.002205 | 0047 | echo: 0047
+0.000372 | 0051 | busy: 0051
+2.001506 | 0050 | echo: 0050
+3.001674 | 0049 | echo: 0049
+2.002929 | 0052 | echo: 0052
+
+Server
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0001
+  pool |   7 | EPOLLOUT | 0001
+server |   4 | EPOLLIN  |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0002
+  pool |   6 | EPOLLOUT | 0002
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0003
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0004
+client |  10 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0001
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0005
+  pool |   7 | EPOLLOUT | 0005
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0006
+client |  10 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0002
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0007
+  pool |   6 | EPOLLOUT | 0007
+client |   8 | EPOLLOUT | echo: 0005
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0008
+  pool |   7 | EPOLLOUT | 0008
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0009
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0010
+client |  10 | EPOLLHUP |
+client |  11 | EPOLLIN  |
+client |  11 | EPOLLOUT | busy: 0011
+client |  11 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0007
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0012
+  pool |   6 | EPOLLOUT | 0012
+server |   4 | EPOLLIN  |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0013
+client |  10 | EPOLLHUP |
+client |  11 | EPOLLIN  |
+client |  11 | EPOLLOUT | busy: 0014
+client |  11 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0008
+client |   8 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0012
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0015
+  pool |   6 | EPOLLOUT | 0015
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0016
+  pool |   7 | EPOLLOUT | 0016
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0017
+client |  10 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0016
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0019
+  pool |   7 | EPOLLOUT | 0019
+client |   8 | EPOLLOUT | echo: 0015
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0018
+  pool |   6 | EPOLLOUT | 0018
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0020
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0022
+client |  10 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0018
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0021
+  pool |   6 | EPOLLOUT | 0021
+client |   9 | EPOLLOUT | echo: 0019
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0023
+  pool |   7 | EPOLLOUT | 0023
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0024
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0025
+client |  10 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0021
+client |   8 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0023
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0026
+  pool |   7 | EPOLLOUT | 0026
+server |   4 | EPOLLIN  |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0027
+  pool |   6 | EPOLLOUT | 0027
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0029
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0028
+client |  10 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0026
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0030
+  pool |   7 | EPOLLOUT | 0030
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0031
+client |  10 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0027
+client |   9 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0030
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0032
+  pool |   7 | EPOLLOUT | 0032
+server |   4 | EPOLLIN  |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0033
+  pool |   6 | EPOLLOUT | 0033
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0034
+client |  10 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0033
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0035
+  pool |   6 | EPOLLOUT | 0035
+client |   8 | EPOLLOUT | echo: 0032
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0037
+  pool |   7 | EPOLLOUT | 0037
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0036
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0038
+client |  10 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0035
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0039
+  pool |   6 | EPOLLOUT | 0039
+client |   8 | EPOLLOUT | echo: 0037
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0040
+  pool |   7 | EPOLLOUT | 0040
+client |   9 | EPOLLOUT | echo: 0039
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0041
+  pool |   6 | EPOLLOUT | 0041
+client |   9 | EPOLLOUT | echo: 0041
+client |   9 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0042
+  pool |   6 | EPOLLOUT | 0042
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0044
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+client |  10 | EPOLLIN  |
+client |  10 | EPOLLOUT | busy: 0043
+client |  10 | EPOLLHUP |
+client |   9 | EPOLLOUT | echo: 0042
+client |   9 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0040
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0046
+  pool |   7 | EPOLLOUT | 0046
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0045
+  pool |   6 | EPOLLOUT | 0045
+client |   9 | EPOLLOUT | echo: 0045
+client |   9 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0046
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0047
+  pool |   7 | EPOLLOUT | 0047
+server |   4 | EPOLLIN  |
+  pool |   9 | EPOLLIN  | 0048
+  pool |   6 | EPOLLOUT | 0048
+server |   4 | EPOLLIN  |
+client |   9 | EPOLLOUT | echo: 0048
+client |   9 | EPOLLHUP |
+  pool |  10 | EPOLLIN  | 0049
+  pool |   6 | EPOLLOUT | 0049
+client |   8 | EPOLLOUT | echo: 0047
+client |   8 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0050
+  pool |   7 | EPOLLOUT | 0050
+server |   4 | EPOLLIN  |
+client |   9 | EPOLLIN  |
+client |   9 | EPOLLOUT | busy: 0051
+client |   9 | EPOLLHUP |
+client |   8 | EPOLLOUT | echo: 0050
+client |   8 | EPOLLHUP |
+client |  10 | EPOLLOUT | echo: 0049
+client |  10 | EPOLLHUP |
+server |   4 | EPOLLIN  |
+  pool |   8 | EPOLLIN  | 0052
+  pool |   6 | EPOLLOUT | 0052
+client |   8 | EPOLLOUT | echo: 0052
+client |   8 | EPOLLHUP |

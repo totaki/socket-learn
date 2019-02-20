@@ -27,9 +27,9 @@ async def sender_loop(event_loop: 'asyncio.AbstractEventLoop', int_max_delay: in
     while LIST_INT_RUN_FLAG[0]:
         int_id = LIST_INT_CURRENT_ID[0]
         # Короче тут мы прекращаем выполнение и ждем когда задача закончится. Надо сделать по настоящему асинхронно
-        await asyncio.create_task(tcp_client(int_max_delay, int_id, event_loop))
+        event_loop.call_soon(lambda: asyncio.create_task(tcp_client(int_max_delay, int_id, event_loop)))
         LIST_INT_CURRENT_ID[0] += 1
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1)
 
 
 def main(int_max_delay: int):

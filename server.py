@@ -51,6 +51,7 @@ def main():
             events = epoll.poll(0)
             for fileno, event in events:
                 if fileno == server_socket.fileno():
+                    print('server | {:>3} | EPOLLIN  | '.format(fileno))
                     connection, address = server_socket.accept()
                     connection.setblocking(0)
                     epoll.register(connection.fileno(), select.EPOLLIN)
@@ -82,16 +83,20 @@ def main():
                                     'conn': connection
                                 }
                                 epoll.register(connection.fileno(), select.EPOLLOUT)
+                                print('  pool | {:>3} | EPOLLIN  | {}'.format(fileno, dict_responses[obj_connection.fileno()][6:].decode()))
                             else:
                                 # Если подключений нет отправляем busy
+                                print('client | {:>3} | EPOLLIN  |'.format(fileno))
                                 epoll.modify(fileno, select.EPOLLOUT)
 
                 elif event & select.EPOLLOUT:
                     # Проверяем если мы сокет в готовых к посылке данных сокатаъ
                     if fileno in dict_polled_connections:
+                        print('  pool | {:>3} | EPOLLOUT | {} '.format(fileno, dict_polled_connections[fileno]['data'].decode()))
                         dict_polled_connections[fileno]['conn'].send(dict_polled_connections[fileno]['data'])
                         epoll.modify(fileno, select.EPOLLIN)
                     else:
+                        print('client | {:>3} | EPOLLOUT | {} '.format(fileno, dict_responses[fileno].decode()))
                         byteswritten = dict_in_connections[fileno].send(dict_responses[fileno])
                         dict_responses[fileno] = dict_responses[fileno][byteswritten:]
                         if len(dict_responses[fileno]) == 0:
@@ -99,6 +104,7 @@ def main():
                             dict_in_connections[fileno].shutdown(socket.SHUT_RDWR)
 
                 elif event & select.EPOLLHUP:
+                    print('client | {:>3} | EPOLLHUP | '.format(fileno))
                     epoll.unregister(fileno)
                     dict_in_connections[fileno].close()
                     del dict_in_connections[fileno]
