@@ -13,6 +13,8 @@
 """
 import socket
 import select
+from printer import print_state
+
 
 list_out_connections = []
 dict_polled_connections = {}
@@ -45,67 +47,94 @@ def main():
 
     epoll = select.epoll(100)
     epoll.register(server_socket.fileno(), select.EPOLLIN)
+    print_state('srv_reg_in_server', server_socket.fileno())
     list_out_connections.extend([get_connection() for i in range(2)])
     try:
         while True:
             events = epoll.poll(0)
             for fileno, event in events:
                 if fileno == server_socket.fileno():
-                    print('server | {:>3} | EPOLLIN  | '.format(fileno))
                     connection, address = server_socket.accept()
                     connection.setblocking(0)
                     epoll.register(connection.fileno(), select.EPOLLIN)
+                    print_state('srv_reg_in_cl', connection.fileno())
                     dict_in_connections[connection.fileno()] = connection
                     dict_requests[connection.fileno()] = b''
                     dict_responses[connection.fileno()] = b'busy: '
 
                 elif event & select.EPOLLIN:
                     if fileno in dict_polled_connections:
+                        print_state('srv_recv_from_db', fileno)
                         dict_request_data = dict_polled_connections.pop(fileno)
                         bs_data = dict_request_data['conn'].recv(10)
                         dict_responses[dict_request_data['fileno']] = bs_data
+                        # Изменяем регистрацию клиентского сокета на выход
+                        print_state('srv_reg_out_cl', dict_request_data['fileno'])
                         epoll.modify(dict_request_data['fileno'], select.EPOLLOUT)
+
+                        # Уберем регистрацию для db сокета
+                        print_state('srv_unreg_db', fileno)
                         epoll.unregister(fileno)
+
+                        # Вернем наш сокет в poll
+                        print_state('srv_push_to_pull_db', fileno)
                         list_out_connections.append(dict_request_data['conn'])
                     else:
                         obj_connection = dict_in_connections[fileno]
                         # Тут мы специальн читаем по 2 байта чтобы показать, что можем вычитывать не все за раз
                         bs_data = obj_connection.recv(2)
+                        print_state('srv_recv_from_cl', fileno, bs_data.decode())
                         dict_responses[obj_connection.fileno()] += bs_data
                         if len(dict_responses[obj_connection.fileno()]) == 10:
                             if len(list_out_connections):
-                                # Забираем одно подкючение ставим его на out, добавляем в словарь для отсылки данных вместе
-                                # с даннами и туда же кладем конект в который потом надо написать.
+                                # Забираем одно подкючение ставим его на out, добавляем в словарь для отсылки данных
+                                # вместе с даннами и туда же кладем конект в который потом надо написать.
                                 connection = list_out_connections.pop()
                                 dict_polled_connections[connection.fileno()] = {
                                     'data': dict_responses[obj_connection.fileno()][6:],
                                     'fileno': obj_connection.fileno(),
                                     'conn': connection
                                 }
+                                print_state(
+                                    'srv_reg_out_db',
+                                    fileno,
+                                    dict_responses[obj_connection.fileno()][6:].decode()
+                                )
                                 epoll.register(connection.fileno(), select.EPOLLOUT)
-                                print('  pool | {:>3} | EPOLLIN  | {}'.format(fileno, dict_responses[obj_connection.fileno()][6:].decode()))
                             else:
                                 # Если подключений нет отправляем busy
-                                print('client | {:>3} | EPOLLIN  |'.format(fileno))
+                                print_state(
+                                    'srv_reg_out_cl',
+                                    fileno,
+                                    dict_responses[obj_connection.fileno()].decode()
+                                )
                                 epoll.modify(fileno, select.EPOLLOUT)
 
                 elif event & select.EPOLLOUT:
                     # Проверяем если мы сокет в готовых к посылке данных сокатаъ
                     if fileno in dict_polled_connections:
-                        print('  pool | {:>3} | EPOLLOUT | {} '.format(fileno, dict_polled_connections[fileno]['data'].decode()))
+
+                        print_state('srv_send_to_db', fileno, dict_polled_connections[fileno]['data'].decode())
                         dict_polled_connections[fileno]['conn'].send(dict_polled_connections[fileno]['data'])
+
+                        print_state('srv_reg_in_db', fileno)
                         epoll.modify(fileno, select.EPOLLIN)
                     else:
-                        print('client | {:>3} | EPOLLOUT | {} '.format(fileno, dict_responses[fileno].decode()))
+                        print_state('srv_send_cl', fileno, dict_responses[fileno].decode())
                         byteswritten = dict_in_connections[fileno].send(dict_responses[fileno])
                         dict_responses[fileno] = dict_responses[fileno][byteswritten:]
                         if len(dict_responses[fileno]) == 0:
+
+                            print_state('srv_reg_0_cl', fileno)
                             epoll.modify(fileno, 0)
+
+                            print_state('srv_shutdown_cl', fileno)
                             dict_in_connections[fileno].shutdown(socket.SHUT_RDWR)
 
                 elif event & select.EPOLLHUP:
-                    print('client | {:>3} | EPOLLHUP | '.format(fileno))
+                    print_state('srv_unreg_cl', fileno)
                     epoll.unregister(fileno)
+                    print_state('srv_close_cl', fileno)
                     dict_in_connections[fileno].close()
                     del dict_in_connections[fileno]
     finally:
