@@ -25,7 +25,7 @@ async def tcp_client(int_max_delay: int, int_id: int, event_loop: 'asyncio.Abstr
     obj_writer.close()
 
 
-async def sender_loop(event_loop: 'asyncio.AbstractEventLoop', int_max_delay: int):
+async def run_clients_loop(event_loop: 'asyncio.AbstractEventLoop', int_max_delay: int):
     while LIST_INT_RUN_FLAG[0]:
         int_id = LIST_INT_CURRENT_ID[0]
         # Короче тут мы прекращаем выполнение и ждем когда задача закончится. Надо сделать по настоящему асинхронно
@@ -37,7 +37,7 @@ async def sender_loop(event_loop: 'asyncio.AbstractEventLoop', int_max_delay: in
 def main(int_max_delay: int):
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(sender_loop(loop, int_max_delay=int_max_delay))
+        loop.run_until_complete(run_clients_loop(loop, int_max_delay=int_max_delay))
     except KeyboardInterrupt:
         LIST_INT_RUN_FLAG[0] = False
         tasks = asyncio.all_tasks(loop)
