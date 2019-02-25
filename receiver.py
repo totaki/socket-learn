@@ -5,19 +5,22 @@
 import asyncio
 import argparse
 import random
+from printer import print_state
 
 
 def get_handler(int_max_delay: int):
     async def handler(reader, writer):
-        print('Accept connection')
+        print_state('db_accept')
         while True:
-            bs_data = await reader.read(100)
-            str_message = bs_data.decode()
+            bytes_data = await reader.read(100)
+            str_message = bytes_data.decode()
             int_sleep_time = random.randint(1, int_max_delay)
-            print('from {} | sleep: {:>2}'.format(str_message, int_sleep_time))
+            print_state('db_recv', str_message, int_sleep_time)
             await asyncio.sleep(int_sleep_time)
-            writer.write(b'echo: %s' % bs_data)
+            bytes_response = b'echo: %s' % bytes_data
+            writer.write(bytes_response)
             await writer.drain()
+            print_state('db_send', bytes_response.decode())
     return handler
 
 
