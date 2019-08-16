@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <style>
+        .data-list {
+            display: flex;
+            flex-direction: column;
+        }
+        .data-list > div {
+            margin-bottom: 16px;
+        }
+        .data-list p.card-text {
+            margin-bottom: 0;
+        }
+    </style>
+    <title>Hello, world!</title>
+  </head>
+  <body>
+    <div class="container">
+        <h3>Epoll in Python</h3>
+        <div class="row">
+            <div class="col"><p>Clients</p></div>
+            <div class="col"><p>Service</p></div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="data-list" id="clients"></div>
+            </div>
+            <div class="col">
+                <div class="data-list" id="service"></div>
+            </div>
+        </div>
+    </div>
+  </body>
+    <script>
+        var statusToColor = {
+            'connecting': 'text-primary',
+            'connected': 'text-success',
+            'wait': 'text-info',
+            'busy': 'text-danger',
+
+        };
+        var cards = {};
+        var clients = document.getElementById('clients');
+        var service = document.getElementById('service');
+
+        var createTextCard = function (element, name, value, colorClass) {
+            var p = document.createElement('p');
+            p.classList.add('card-text');
+            var spanName = document.createElement('span');
+            spanName.classList.add('text-secondary');
+            spanName.textContent = `${name}: `;
+            var spanValue = document.createElement('span');
+            spanValue.textContent = value;
+            if (colorClass) {
+                spanValue.classList.add(colorClass);
+            }
+            p.appendChild(spanName);
+            p.appendChild(spanValue);
+            element.appendChild(p)
+        };
+
+        var addCard = function (element, hash, ip, port, status) {
+            var card = document.createElement('div');
+            card.classList.add('card');
+
+            var cardBody = document.createElement('div');
+            card.classList.add('card-body');
+            card.appendChild(cardBody);
+
+            var cardTitle = document.createElement('h5');
+            cardTitle.classList.add('card-title');
+            cardTitle.textContent = hash;
+
+            cardBody.appendChild(cardTitle);
+            createTextCard(cardBody, 'ip', ip);
+            createTextCard(cardBody, 'port', port);
+
+            if (status) {
+                var colorStatus = statusToColor[status];
+                createTextCard(cardBody, 'status', status, colorStatus);
+            }
+
+            element.appendChild(card);
+        };
+
+        var deleteCard = function (id) {
+
+        };
+
+        var test = function () {
+            addCard(clients, '0001', '127.0.0.1', 3000, 'connecting');
+            addCard(clients, '0002', '127.0.0.1', 3000, 'connected');
+            addCard(clients, '0003', '127.0.0.1', 3000, 'wait');
+            addCard(clients, '0004', '127.0.0.1', 3000, 'busy');
+            addCard(service, '0001', '127.0.0.1', 3000);
+            addCard(service, '0001', '127.0.0.1', 3000);
+        };
+        test()
+    </script>
+</html>
