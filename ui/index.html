@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <style>
+        html, body {
+            min-height: 100%;
+        }
+        body {
+            background: linear-gradient(#1e415e, #2b5b84);
+        }
         .data-list {
             display: flex;
             flex-direction: column;
@@ -20,10 +26,12 @@
   </head>
   <body>
     <div class="container">
-        <h3>Epoll in Python</h3>
         <div class="row">
-            <div class="col"><p>Clients</p></div>
-            <div class="col"><p>Service</p></div>
+            <div class="col" style="text-align: center; margin: 16px 0"><img style="height: 72px" src="static/logo.svg"></div>
+        </div>
+        <div class="row">
+            <div class="col"><h4 class="text-light">Clients</h4></div>
+            <div class="col"><h4 class="text-light">Service</h4></div>
         </div>
         <div class="row">
             <div class="col">
