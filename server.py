@@ -11,16 +11,66 @@
 пишем туда данные (возможно нужна регистрация на запись) и ждем. Если свободного нет отдаем ответ и закрываем соединение
 Когда приходить ответ от фейкового сервера БД, мы отвечаем в нужные сокет и возвращаем в наш пул.
 """
+from typing import TYPE_CHECKING
 import socket
 import select
 from printer import print_state
 
+
+if TYPE_CHECKING:
+    from select import epoll
 
 list_out_connections = []
 dict_polled_connections = {}
 dict_in_connections = {}
 dict_requests = {}
 dict_responses = {}
+
+
+class Services:
+    def __init__(self, poll: 'epoll', address: str, port: int, count: int):
+        self._poll = poll
+        self._address = address
+        self._port = port
+        self._count = count
+
+    def connect(self):
+        pass
+
+    def write_message(self):
+        pass
+
+    def read_message(self):
+        pass
+
+    def acquire(self):
+        pass
+
+    def return_connection(self):
+        pass
+
+
+class Clients:
+    def __init__(self, poll: 'epoll'):
+        self._poll = poll
+
+    def accept_client(self):
+        pass
+
+    def read_message(self):
+        pass
+
+    def write_message(self):
+        pass
+
+    def close_client(self):
+        pass
+
+
+class Server:
+    def __init__(self, poll: 'epoll', port: int):
+        self._poll = poll
+        self._port = port
 
 
 def get_connection():
