@@ -11,11 +11,10 @@
 пишем туда данные (возможно нужна регистрация на запись) и ждем. Если свободного нет отдаем ответ и закрываем соединение
 Когда приходить ответ от фейкового сервера БД, мы отвечаем в нужные сокет и возвращаем в наш пул.
 """
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 import socket
 import select
 from printer import print_state
-
 
 if TYPE_CHECKING:
     from select import epoll
@@ -27,14 +26,33 @@ dict_requests = {}
 dict_responses = {}
 
 
+class Config:
+    def __init__(self,
+                 server_address: str,
+                 server_port: int,
+                 service_address: str,
+                 service_port: int,
+                 service_conn_count: int,
+                 poll_wait: int,
+                 size_hint: int,
+                 read_bytes: int
+                 ):
+        self.server_address = server_address
+        self.server_port = server_port
+        self.service_address = service_address
+        self.service_port = service_port
+        self.service_conn_count = service_conn_count
+        self.poll_wait = poll_wait
+        self.size_hint = size_hint
+        self.read_bytes = read_bytes
+
+
 class Services:
-    def __init__(self, poll: 'epoll', address: str, port: int, count: int):
-        self._poll = poll
-        self._address = address
-        self._port = port
-        self._count = count
-        self._connections = []
-        self._acquired_connections = {}
+    def __init__(self, config: 'Config'):
+        self._address = config.service_address
+        self._port = config.service_port
+        self._count = config.service_conn_count
+        self._connections: List['socket'] = []
 
     def connect(self):
         for i in range(self._count):
@@ -56,14 +74,18 @@ class Services:
         else:
             return None
 
-    def return_connection(self):
-        self._connections.append(
-            self._acquired_connections.pop())
+    def return_connection(self, s: 'socket'):
+        self._connections.append(s)
+
+
+class Client:
+    def __init__(self, address: str, port: int, read_bytes: bytes, write_bytes: bytes, ):
+        pass
 
 
 class Clients:
-    def __init__(self, poll: 'epoll'):
-        self._poll = poll
+    def __init__(self):
+        pass
 
     def accept_client(self):
         pass
@@ -79,9 +101,32 @@ class Clients:
 
 
 class Server:
-    def __init__(self, poll: 'epoll', port: int):
-        self._poll = poll
-        self._port = port
+    def __init__(self, config: Config):
+        self._config: Config = config
+        self._clients: Clients = Clients()
+        self._services: Services = Services(self._config)
+        self._poll: 'epoll' = select.epoll(self._config.poll_wait)
+        self._socket: 'socket' = self._get_socket()
+
+    def _get_socket(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((
+            self._config.service_address,
+            self._config.server_port
+        ))
+        s.listen(1)
+        s.setblocking(False)
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        return s
+
+    def setup(self):
+        self._poll = select.epoll(self._config.size_hint)
+        self._poll.register(self._socket.fileno(), select.EPOLLIN)
+        self._services.connect()
+
+    def accept_client(self):
+        pass
 
 
 def get_connection():
@@ -185,7 +230,6 @@ def main():
                         byteswritten = dict_in_connections[fileno].send(dict_responses[fileno])
                         dict_responses[fileno] = dict_responses[fileno][byteswritten:]
                         if len(dict_responses[fileno]) == 0:
-
                             print_state('srv_reg_0_cl', fileno)
                             epoll.modify(fileno, 0)
 
