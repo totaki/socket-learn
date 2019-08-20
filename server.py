@@ -11,13 +11,17 @@
 пишем туда данные (возможно нужна регистрация на запись) и ждем. Если свободного нет отдаем ответ и закрываем соединение
 Когда приходить ответ от фейкового сервера БД, мы отвечаем в нужные сокет и возвращаем в наш пул.
 """
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Dict, Union
 import socket
 import select
 from printer import print_state
 
 if TYPE_CHECKING:
     from select import epoll
+    from socket import socket as sock
+    from typing import Tuple
+
+Int = Union[str, int]
 
 list_out_connections = []
 dict_polled_connections = {}
@@ -26,16 +30,20 @@ dict_requests = {}
 dict_responses = {}
 
 
+def pprint(key, value: str = ''):
+    print(' {0: >36} = 1'.format(key, value))
+
+
 class Config:
     def __init__(self,
                  server_address: str,
-                 server_port: int,
+                 server_port: Int,
                  service_address: str,
-                 service_port: int,
-                 service_conn_count: int,
-                 poll_wait: int,
-                 size_hint: int,
-                 read_bytes: int
+                 service_port: Int,
+                 service_conn_count: Int,
+                 poll_wait: Int,
+                 size_hint: Int,
+                 read_bytes: Int
                  ):
         self.server_address = server_address
         self.server_port = server_port
@@ -52,7 +60,7 @@ class Services:
         self._address = config.service_address
         self._port = config.service_port
         self._count = config.service_conn_count
-        self._connections: List['socket'] = []
+        self._connections: List['sock'] = []
 
     def connect(self):
         for i in range(self._count):
@@ -74,13 +82,23 @@ class Services:
         else:
             return None
 
-    def return_connection(self, s: 'socket'):
+    def return_connection(self, s: 'sock'):
         self._connections.append(s)
 
 
 class Client:
-    def __init__(self, address: str, port: int, read_bytes: bytes, write_bytes: bytes, ):
-        pass
+    def __init__(self,
+                 address: str,
+                 port: int,
+                 connection: 'sock',
+                 read_bytes: bytes = b'',
+                 write_bytes: bytes = b'',
+                 ):
+        self.address = address
+        self.port = port
+        self.read_bytes = read_bytes
+        self.write_bytes = write_bytes
+        self.connection = connection
 
 
 class Clients:
@@ -103,10 +121,10 @@ class Clients:
 class Server:
     def __init__(self, config: Config):
         self._config: Config = config
-        self._clients: Clients = Clients()
+        self._clients: Dict[int, Client] = {}
         self._services: Services = Services(self._config)
         self._poll: 'epoll' = select.epoll(self._config.poll_wait)
-        self._socket: 'socket' = self._get_socket()
+        self._socket: 'sock' = self._get_socket()
 
     def _get_socket(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -124,9 +142,18 @@ class Server:
         self._poll = select.epoll(self._config.size_hint)
         self._poll.register(self._socket.fileno(), select.EPOLLIN)
         self._services.connect()
+        pprint('SERVER SETUP')
 
     def accept_client(self):
-        pass
+        connection, address = self._socket.accept()  # type: sock, Tuple[str, int]
+        client = Client(*address, connection=connection)
+        connection.setblocking(False)
+        self._clients[connection.fileno()] = client
+        self._poll.register(connection.fileno(), select.EPOLLIN)
+        pprint('CLIENT_CONNECTED', '{}:{}'.format(*address))
+
+    def get_client(self, s: 'sock') -> Client:
+        return self._clients[s.fileno()]
 
 
 def get_connection():
@@ -246,6 +273,11 @@ def main():
         epoll.unregister(server_socket.fileno())
         epoll.close()
         server_socket.close()
+
+
+def _main():
+    pass
+
 
 
 if __name__ == '__main__':
