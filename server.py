@@ -33,9 +33,16 @@ class Services:
         self._address = address
         self._port = port
         self._count = count
+        self._connections = []
+        self._acquired_connections = {}
 
     def connect(self):
-        pass
+        for i in range(self._count):
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((self._address, self._port))
+            s.setblocking(False)
+            s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            self._connections.append(s)
 
     def write_message(self):
         pass
@@ -44,10 +51,14 @@ class Services:
         pass
 
     def acquire(self):
-        pass
+        if len(self._connections):
+            return self._connections.pop()
+        else:
+            return None
 
     def return_connection(self):
-        pass
+        self._connections.append(
+            self._acquired_connections.pop())
 
 
 class Clients:
