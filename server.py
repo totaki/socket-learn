@@ -14,6 +14,8 @@
 from typing import TYPE_CHECKING, List, Dict, Union
 import socket
 import select
+import json
+
 from printer import print_state
 
 if TYPE_CHECKING:
@@ -43,7 +45,6 @@ class Config:
                  service_conn_count: Int,
                  poll_wait: Int,
                  size_hint: Int,
-                 read_bytes: Int
                  ):
         self.server_address = server_address
         self.server_port = server_port
@@ -52,7 +53,16 @@ class Config:
         self.service_conn_count = service_conn_count
         self.poll_wait = poll_wait
         self.size_hint = size_hint
-        self.read_bytes = read_bytes
+
+    @classmethod
+    def load(cls, file_name: str) -> 'Config':
+        with open(file_name) as f:
+            _config = json.load(f)
+            print('\nLoad config:')
+            for k in sorted(_config):
+                print_key = ' '.join(k.split('_')).capitalize()
+                print(f'    {print_key}: {_config[k]}')
+            return cls(**_config)
 
 
 class Services:
@@ -275,10 +285,13 @@ def main():
         server_socket.close()
 
 
-def _main():
+def _main(config: 'Config'):
     pass
 
 
-
 if __name__ == '__main__':
-    main()
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('--config', default='config.json', required=False)
+    args = parser.parse_args()
+    _main(Config.load(args.config))
