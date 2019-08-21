@@ -126,6 +126,8 @@ class Server:
         return self._poll.poll(self._config.poll_wait)
 
     def stop(self):
+        # TODO: более изящное решение, возможно добавить какой-то state бинарный или на каждое
+        #  действие добавлять callback на отключение
         try:
             self._poll.unregister(self._socket.fileno())
         except:
