@@ -292,6 +292,6 @@ def _main(config: 'Config'):
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument('--config', default='config.json', required=False)
+    parser.add_argument('--config', default='default_config.json', required=False)
     args = parser.parse_args()
     _main(Config.load(args.config))
