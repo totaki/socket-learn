@@ -11,19 +11,17 @@
 пишем туда данные (возможно нужна регистрация на запись) и ждем. Если свободного нет отдаем ответ и закрываем соединение
 Когда приходить ответ от фейкового сервера БД, мы отвечаем в нужные сокет и возвращаем в наш пул.
 """
-from typing import TYPE_CHECKING, List, Dict, Union
+from typing import TYPE_CHECKING, List, Dict, Optional
 import socket
 import select
-import json
 
+from config import Config
 from printer import print_state
 
 if TYPE_CHECKING:
     from select import epoll
     from socket import socket as sock
     from typing import Tuple
-
-Int = Union[str, int]
 
 list_out_connections = []
 dict_polled_connections = {}
@@ -34,35 +32,6 @@ dict_responses = {}
 
 def pprint(key, value: str = ''):
     print(' {0: >36} = 1'.format(key, value))
-
-
-class Config:
-    def __init__(self,
-                 server_address: str,
-                 server_port: Int,
-                 service_address: str,
-                 service_port: Int,
-                 service_conn_count: Int,
-                 poll_wait: Int,
-                 size_hint: Int,
-                 ):
-        self.server_address = server_address
-        self.server_port = server_port
-        self.service_address = service_address
-        self.service_port = service_port
-        self.service_conn_count = service_conn_count
-        self.poll_wait = poll_wait
-        self.size_hint = size_hint
-
-    @classmethod
-    def load(cls, file_name: str) -> 'Config':
-        with open(file_name) as f:
-            _config = json.load(f)
-            print('\nLoad config:')
-            for k in sorted(_config):
-                print_key = ' '.join(k.split('_')).capitalize()
-                print(f'    {print_key}: {_config[k]}')
-            return cls(**_config)
 
 
 class Services:
@@ -111,30 +80,13 @@ class Client:
         self.connection = connection
 
 
-class Clients:
-    def __init__(self):
-        pass
-
-    def accept_client(self):
-        pass
-
-    def read_message(self):
-        pass
-
-    def write_message(self):
-        pass
-
-    def close_client(self):
-        pass
-
-
 class Server:
     def __init__(self, config: Config):
         self._config: Config = config
         self._clients: Dict[int, Client] = {}
         self._services: Services = Services(self._config)
-        self._poll: 'epoll' = select.epoll(self._config.poll_wait)
-        self._socket: 'sock' = self._get_socket()
+        self._poll: Optional['epoll'] = None
+        self._socket: Optional['sock'] = None
 
     def _get_socket(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -149,10 +101,15 @@ class Server:
         return s
 
     def setup(self):
-        self._poll = select.epoll(self._config.size_hint)
-        self._poll.register(self._socket.fileno(), select.EPOLLIN)
-        self._services.connect()
-        pprint('SERVER SETUP')
+        try:
+            self._poll = select.epoll(self._config.size_hint)
+            self._socket = self._get_socket()
+            self._poll.register(self._socket.fileno(), select.EPOLLIN)
+            self._services.connect()
+            pprint('SERVER SETUP')
+        except Exception:
+            self.stop()
+            raise
 
     def accept_client(self):
         connection, address = self._socket.accept()  # type: sock, Tuple[str, int]
@@ -165,6 +122,25 @@ class Server:
     def get_client(self, s: 'sock') -> Client:
         return self._clients[s.fileno()]
 
+    def get_event(self):
+        return self._poll.poll(self._config.poll_wait)
+
+    def stop(self):
+        try:
+            self._poll.unregister(self._socket.fileno())
+        except:
+            pass
+
+        try:
+            self._poll.close()
+        except:
+            pass
+
+        try:
+            self._socket.close()
+        except:
+            pass
+
 
 def get_connection():
     obj_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -174,7 +150,7 @@ def get_connection():
     return obj_socket
 
 
-def main():
+def _main():
     """
     EPOLLIN 1
     EPOLLOUT 4
@@ -285,13 +261,15 @@ def main():
         server_socket.close()
 
 
-def _main(config: 'Config'):
-    pass
+def main(config: 'Config'):
+    server = Server(config)
+    try:
+        server.setup()
+        while True:
+            event = server.get_event()
+    finally:
+        server.stop()
 
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    parser.add_argument('--config', default='default_config.json', required=False)
-    args = parser.parse_args()
-    _main(Config.load(args.config))
+    main(Config.from_cli())

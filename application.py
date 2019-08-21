@@ -5,6 +5,7 @@ from tornado.websocket import WebSocketHandler as TornadoWebSocketHandler
 from tornado.tcpserver import TCPServer
 from tornado.iostream import StreamClosedError
 from tornado import gen
+from config import Config
 
 
 END_SYMBOL = b'#'
@@ -43,12 +44,14 @@ class MainHandler(tornado.web.RequestHandler):
 if __name__ == "__main__":
     connections = Connections()
     service = Service()
-    loop = tornado.ioloop.IOLoop.current()
+    conf = Config.from_cli()
     application = tornado.web.Application([
         (r'/', MainHandler),
         (r'/ws', WebSocketHandler),
         (r'/static', tornado.web.StaticFileHandler),
-    ], debug=True, connections=connections, static_path='ui/static')
-    application.listen(8888)
-    service.listen(9999)
+    ], debug=True, connections=connections, static_path='ui/static', config=conf)
+
+    loop = tornado.ioloop.IOLoop.current()
+    application.listen(conf.application_port)
+    service.listen(conf.service_port)
     loop.start()

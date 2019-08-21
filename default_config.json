@@ -1,9 +1,11 @@
 {
-   "server_address": "0.0.0.0",
+   "server_address": "127.0.0.1",
    "server_port": 8000,
-   "service_address": "0.0.0.0",
+   "application_address": "127.0.0.1",
+   "application_port": 8080,
+   "service_address": "127.0.0.1",
    "service_port": 8888,
    "service_conn_count": 2,
-   "poll_wait": 10,
+   "poll_wait": 0,
    "size_hint": 100
 }
