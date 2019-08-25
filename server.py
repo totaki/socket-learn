@@ -127,17 +127,29 @@ class Server:
         pprint('CLIENT_CONNECTED', '{}:{}'.format(*address))
 
     def handle_incoming_event(self, fn: int):
+        pprint('INCOMING DATA')
         if fn in self._wait_clients:
             pass
+
         else:
-            pass
+            cl = self._clients[fn]
+            cl.read_bytes += cl.connection.recv(READ_BYTES)
+            if cl.read_bytes.endswith(b'#'):
+                pprint('BYTES FROM CLIENT', cl.read_bytes.decode())
+                service_conn = self._services.acquire()
+                if service_conn:
+                    self._wait_clients[service_conn.fileno()] = fn
+                    self._poll.register(service_conn.fileno(), select.EPOLLOUT)
+                else:
+                    cl.write_bytes += b'service_busy'
+                    self._poll.modify(fn, select.EPOLLOUT)
 
     def handle_outgoing_event(self, fn: int):
         pass
 
     def handle_close_event(self, fn: int):
         client = self._clients[fn]
-        epoll.unregister(fn)
+        self._poll.unregister(fn)
         client.connection.close()
         pprint('CLIENT_DISCONNECTED', '{}:{}'.format(client.address, client.port))
         del self._clients[fn]
