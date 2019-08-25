@@ -21,6 +21,7 @@ class Connections:
 
 class Service(TCPServer):
     async def handle_stream(self, stream, address):
+        print(address)
         while True:
             try:
                 data = await stream.read_until(END_SYMBOL)
@@ -32,13 +33,20 @@ class Service(TCPServer):
 
 
 class WebSocketHandler(TornadoWebSocketHandler):
-    pass
+    def check_origin(self, origin):
+        return True
 
 
 
 class MainHandler(tornado.web.RequestHandler):
+
     def get(self):
-        self.render('ui/index.html')
+        config: 'Config' = self.settings['config']
+        self.render(
+            'ui/index.html',
+            application_port=config.application_port,
+            application_address=config.application_address
+        )
 
 
 if __name__ == "__main__":

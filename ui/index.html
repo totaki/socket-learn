@@ -108,5 +108,7 @@
             addCard(service, '0001', '127.0.0.1', 3000);
         };
         test()
+
+        var socket = new WebSocket("ws://{{ application_address }}:{{ application_port }}/ws");
     </script>
 </html>
