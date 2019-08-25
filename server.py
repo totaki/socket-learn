@@ -29,6 +29,8 @@ dict_in_connections = {}
 dict_requests = {}
 dict_responses = {}
 
+READ_BYTES = 4
+
 
 def pprint(key, value: str = ''):
     print(' {0: >36} = 1'.format(key, value))
@@ -85,8 +87,13 @@ class Server:
         self._config: Config = config
         self._clients: Dict[int, Client] = {}
         self._services: Services = Services(self._config)
+        self._wait_clients: Dict[int, int] = {}
         self._poll: Optional['epoll'] = None
         self._socket: Optional['sock'] = None
+
+    @property
+    def fn(self):
+        return self._socket.fileno()
 
     def _get_socket(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -118,6 +125,22 @@ class Server:
         self._clients[connection.fileno()] = client
         self._poll.register(connection.fileno(), select.EPOLLIN)
         pprint('CLIENT_CONNECTED', '{}:{}'.format(*address))
+
+    def handle_incoming_event(self, fn: int):
+        if fn in self._wait_clients:
+            pass
+        else:
+            pass
+
+    def handle_outgoing_event(self, fn: int):
+        pass
+
+    def handle_close_event(self, fn: int):
+        client = self._clients[fn]
+        epoll.unregister(fn)
+        client.connection.close()
+        pprint('CLIENT_DISCONNECTED', '{}:{}'.format(client.address, client.port))
+        del self._clients[fn]
 
     def get_client(self, s: 'sock') -> Client:
         return self._clients[s.fileno()]
@@ -268,7 +291,16 @@ def main(config: 'Config'):
     try:
         server.setup()
         while True:
-            event = server.get_event()
+            events = server.get_event()
+            for fn, event in events:
+                if fn == server.fn:
+                    server.accept_client()
+                elif event & select.EPOLLIN:
+                    server.handle_incoming_event(fn)
+                elif event & select.EPOLLOUT:
+                    server.handle_outgoing_event(fn)
+                elif event & select.EPOLLHUP:
+                    pass
     finally:
         server.stop()
 

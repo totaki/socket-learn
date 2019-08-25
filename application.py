@@ -1,3 +1,6 @@
+import json
+import logging
+
 import tornado.ioloop
 import tornado.web
 import random
@@ -10,6 +13,33 @@ from config import Config
 
 END_SYMBOL = b'#'
 MAX_DELAY = 5
+WS_CONNECTIONS = set()
+SERVER_CONNECTIONS = set()
+SERVER_ADD = 'add'
+SERVER_REMOVE = 'remove'
+
+
+def write_message(conn, name: str, **kwargs) -> None:
+    message = json.dumps({
+        'name': name,
+        'data': kwargs
+    })
+    try:
+        conn.write_message(message)
+    except Exception as e:
+        logging.error('Write ws connection message error: %s', e)
+
+
+def on_ws_client_connection(conn):
+    write_message(conn, name='connected')
+    for address in SERVER_CONNECTIONS:
+        write_message(conn, 'server_%s' % SERVER_ADD, address=address[0], port=address[1])
+
+
+def on_server_change(address, attr):
+    getattr(SERVER_CONNECTIONS, attr)(address)
+    for conn in WS_CONNECTIONS:
+        write_message(conn, 'server_%s' % attr, address=address[0], port=address[1])
 
 
 class Connections:
@@ -21,7 +51,7 @@ class Connections:
 
 class Service(TCPServer):
     async def handle_stream(self, stream, address):
-        print(address)
+        on_server_change(address, SERVER_ADD)
         while True:
             try:
                 data = await stream.read_until(END_SYMBOL)
@@ -30,12 +60,19 @@ class Service(TCPServer):
                 await stream.write(b'echo: %s' % data)
             except StreamClosedError:
                 break
+        on_server_change(address, SERVER_REMOVE)
 
 
 class WebSocketHandler(TornadoWebSocketHandler):
     def check_origin(self, origin):
         return True
 
+    def open(self, *args: str, **kwargs: str) -> None:
+        on_ws_client_connection(self)
+        WS_CONNECTIONS.add(self)
+
+    def close(self, code: int = None, reason: str = None) -> None:
+        WS_CONNECTIONS.remove(self)
 
 
 class MainHandler(tornado.web.RequestHandler):
