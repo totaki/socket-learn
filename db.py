@@ -17,7 +17,7 @@ def get_handler(int_max_delay: int):
             int_sleep_time = random.randint(1, int_max_delay)
             print_state('db_recv', str_message, int_sleep_time)
             await asyncio.sleep(int_sleep_time)
-            bytes_response = b'echo: %s' % bytes_data
+            bytes_response = b'echo: %s#' % bytes_data
             writer.write(bytes_response)
             await writer.drain()
             print_state('db_send', bytes_response.decode())

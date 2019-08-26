@@ -14,10 +14,10 @@ LIST_INT_CURRENT_ID = [1]
 
 async def tcp_client(int_max_delay: int, int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
     await asyncio.sleep(random.randint(1, int_max_delay))
-    str_message = '{:0>4}'.format(int_id)
+    str_message = '{:0>4}#'.format(int_id)
     int_current_time = int(time.time())
     print_state('client_conn', str_message)
-    obj_reader, obj_writer = await asyncio.open_connection('127.0.0.1', 8080, loop=event_loop)
+    obj_reader, obj_writer = await asyncio.open_connection('127.0.0.1', 8000, loop=event_loop)
     obj_writer.write(str_message.encode())
     print_state('client_wait', str_message)
     b_data = await obj_reader.read(100)

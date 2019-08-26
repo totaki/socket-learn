@@ -33,7 +33,7 @@ READ_BYTES = 4
 
 
 def pprint(key, value: str = ''):
-    print(' {0: >36} = 1'.format(key, value))
+    print(' {0: >36} = {1}'.format(key, value))
 
 
 class Services:
@@ -87,7 +87,7 @@ class Server:
         self._config: Config = config
         self._clients: Dict[int, Client] = {}
         self._services: Services = Services(self._config)
-        self._wait_clients: Dict[int, int] = {}
+        self._wait_clients: Dict[int, Tuple['sock', Client]] = {}
         self._poll: Optional['epoll'] = None
         self._socket: Optional['sock'] = None
 
@@ -129,8 +129,14 @@ class Server:
     def handle_incoming_event(self, fn: int):
         pprint('INCOMING DATA')
         if fn in self._wait_clients:
-            pass
-
+            service_conn, cl = self._wait_clients[fn]
+            cl.write_bytes += service_conn.recv(READ_BYTES)
+            if cl.write_bytes.endswith(b'#'):
+                pprint('BYTES FROM SERVICE', cl.write_bytes.decode())
+                self._poll.unregister(fn)
+                self._services.return_connection(service_conn)
+                self._wait_clients.pop(fn)
+                self._poll.modify(cl.connection.fileno(), select.EPOLLOUT)
         else:
             cl = self._clients[fn]
             cl.read_bytes += cl.connection.recv(READ_BYTES)
@@ -138,14 +144,23 @@ class Server:
                 pprint('BYTES FROM CLIENT', cl.read_bytes.decode())
                 service_conn = self._services.acquire()
                 if service_conn:
-                    self._wait_clients[service_conn.fileno()] = fn
+                    self._wait_clients[service_conn.fileno()] = (service_conn, cl)
                     self._poll.register(service_conn.fileno(), select.EPOLLOUT)
                 else:
-                    cl.write_bytes += b'service_busy'
+                    cl.write_bytes += b'service_busy#'
                     self._poll.modify(fn, select.EPOLLOUT)
 
     def handle_outgoing_event(self, fn: int):
-        pass
+        pprint('OUTGOING DATA')
+        if fn in self._wait_clients:
+            service_conn, cl = self._wait_clients[fn]
+            service_conn.send(cl.read_bytes)
+            self._poll.modify(service_conn.fileno(), select.EPOLLIN)
+        else:
+            cl = self._clients[fn]
+            cl.connection.send(cl.write_bytes)
+            self._poll.modify(fn, 0)
+            cl.connection.shutdown(socket.SHUT_RDWR)
 
     def handle_close_event(self, fn: int):
         client = self._clients[fn]
