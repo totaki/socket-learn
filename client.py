@@ -6,10 +6,35 @@ import time
 import argparse
 import random
 import asyncio
+
+from config import Config
 from printer import print_state
 
 LIST_INT_RUN_FLAG = [True]
 LIST_INT_CURRENT_ID = [1]
+
+
+async def worker(
+        config: 'Config',
+        name: str,
+        tasks_queue: 'asyncio.Queue',
+        result_queue: 'asyncio.Queue',
+        loop: 'asyncio.AbstractEventLoop'
+):
+    message = f'{name}#'
+    while True:
+        sleep_for = await tasks_queue.get()
+        await asyncio.sleep(sleep_for)
+        reader, writer = await asyncio.open_connection(
+            config.server_address,
+            config.server_port,
+            loop=loop
+        )
+        writer.write(message.encode())
+        result = await reader.readuntil(b'#')
+        result_queue.put_nowait(result)
+        tasks_queue.task_done()
+        writer.close()
 
 
 async def tcp_client(int_max_delay: int, int_id: int, event_loop: 'asyncio.AbstractEventLoop'):
@@ -34,20 +59,38 @@ async def run_clients_loop(event_loop: 'asyncio.AbstractEventLoop', int_max_dela
         await asyncio.sleep(1)
 
 
-def main(int_max_delay: int):
+async def default_callback(result_queue: 'asyncio.Queue'):
+    while True:
+        print(await result_queue.get())
+
+
+async def main(config: 'Config', result_queue=None):
     loop = asyncio.get_event_loop()
+    if not result_queue:
+        result_queue = asyncio.Queue()
+        asyncio.create_task(default_callback(result_queue))
+    tasks_queue = asyncio.Queue()
+    tasks = []
+    for i in range(config.client_count):
+        task = worker(config, f'worker-{i}', tasks_queue, result_queue, loop)
+        tasks.append(asyncio.create_task(task))
     try:
-        loop.run_until_complete(run_clients_loop(loop, int_max_delay=int_max_delay))
+        while True:
+            for i in range(config.client_count):
+                sleep_for = random.randint(1, config.client_max_delay)
+                tasks_queue.put_nowait(sleep_for)
+            await tasks_queue.join()
     except KeyboardInterrupt:
-        LIST_INT_RUN_FLAG[0] = False
-        tasks = asyncio.all_tasks(loop)
-        loop.run_until_complete(asyncio.gather(*tasks))
-    finally:
-        loop.close()
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks)
 
 
 if __name__ == '__main__':
-    argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument('max_delay', type=int)
-    namespace = argument_parser.parse_args()
-    main(namespace.max_delay)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main(Config.from_cli()))
+
+    # argument_parser = argparse.ArgumentParser()
+    # argument_parser.add_argument('max_delay', type=int)
+    # namespace = argument_parser.parse_args()
+    # main(namespace.max_delay)

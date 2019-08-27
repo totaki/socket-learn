@@ -13,20 +13,26 @@ class Config:
                  service_address: str,
                  service_port: Int,
                  service_conn_count: Int,
+                 service_max_delay: Int,
                  application_port: Int,
                  application_address: Int,
                  poll_wait: Int,
                  size_hint: Int,
+                 client_max_delay: Int,
+                 client_count: Int,
                  ):
         self.server_address = server_address
         self.server_port = server_port
         self.service_address = service_address
         self.service_port = service_port
         self.service_conn_count = service_conn_count
+        self.service_max_delay = service_max_delay
         self.application_address = application_address
         self.application_port = application_port
         self.poll_wait = poll_wait
         self.size_hint = size_hint
+        self.client_max_delay = client_max_delay
+        self.client_count = client_count
 
     @classmethod
     def load(cls, file_name: str) -> 'Config':
