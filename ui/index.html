@@ -29,8 +29,13 @@
         <div class="row">
             <div class="col" style="text-align: center; margin: 16px 0"><img style="height: 72px" src="static/logo.svg"></div>
         </div>
-        <div class="row">
-            <div class="col"><h4 class="text-light">Clients</h4></div>
+        <div class="row" style="margin-bottom: 16px;">
+            <div class="col">
+                <div style="display: flex; width: 100%;justify-content: space-between">
+                    <h4 class="text-light">Clients</h4>
+                    <button id="clientsStart" class="btn btn-primary" disabled onclick="start()">Connect</button>
+                </div>
+            </div>
             <div class="col"><h4 class="text-light">Service</h4></div>
         </div>
         <div class="row">
@@ -109,11 +114,42 @@
         };
         test();
 
+        var handlers = {
+            connected: function (data) {
+                var elem = document.getElementById('clientsStart')
+                elem.removeAttribute('disabled')
+            },
+            server_add: function (data) {
+                
+            },
+            server_send: function (data) {
+
+            },
+            worker_ready: function (data) {
+                
+            },
+            worker_wait_start: function (data) {
+                
+            },
+            worker_result: function () {
+                
+            }
+        };
+
         var socket = new WebSocket("ws://{{ application_address }}:{{ application_port }}/ws");
         socket.onmessage = function (event) {
+            console.log(event.data)
             var data = JSON.parse(event.data);
-            console.log(data)
+            var f = handlers[data.name]
+            if (f) {
+                f(data.data)
+            }
         }
-
+        
+        function start() {
+            socket.send('start')
+            var elem = document.getElementById('clientsStart')
+            elem.parentNode.removeChild(elem)
+        }
     </script>
 </html>
