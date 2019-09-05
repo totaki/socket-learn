@@ -26,6 +26,7 @@ async def worker(
             loop=loop
         )
         writer.write(message.encode())
+        result_queue.put_nowait(f'worker_wait_result,{message}')
         result = await reader.readuntil(b'#')
         result_queue.put_nowait(f'worker_result,{result.decode()[:-1]},{message}')
         tasks_queue.task_done()
