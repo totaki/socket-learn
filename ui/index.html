@@ -73,7 +73,7 @@
             }
             p.appendChild(spanName);
             p.appendChild(spanValue);
-            element.appendChild(p)
+            element.innerHTML = p.innerHTML
         };
 
         var addCard = function (element, hash, ip, port, status) {
@@ -104,15 +104,41 @@
 
         };
 
-        var test = function () {
-            addCard(clients, '0001', '127.0.0.1', 3000, 'connecting');
-            addCard(clients, '0002', '127.0.0.1', 3000, 'connected');
-            addCard(clients, '0003', '127.0.0.1', 3000, 'wait');
-            addCard(clients, '0004', '127.0.0.1', 3000, 'busy');
-            addCard(service, '0001', '127.0.0.1', 3000);
-            addCard(service, '0001', '127.0.0.1', 3000);
-        };
-        test();
+        // var test = function () {
+        //     addCard(clients, '0001', '127.0.0.1', 3000, 'connecting');
+        //     addCard(clients, '0002', '127.0.0.1', 3000, 'connected');
+        //     addCard(clients, '0003', '127.0.0.1', 3000, 'wait');
+        //     addCard(clients, '0004', '127.0.0.1', 3000, 'busy');
+        //     addCard(service, '0001', '127.0.0.1', 3000);
+        //     addCard(service, '0001', '127.0.0.1', 3000);
+        // };
+        // test();
+
+        var cards = {}
+
+        var createCard = function (header, id) {
+            var card = document.createElement('div');
+            card.classList.add('card');
+
+            var cardBody = document.createElement('div');
+            card.classList.add('card-body');
+            card.appendChild(cardBody);
+
+            var cardTitle = document.createElement('h5');
+            cardTitle.classList.add('card-title');
+            cardTitle.textContent = header;
+            cardBody.appendChild(cardTitle)
+
+            var messageBody = document.createElement('div');
+            cardBody.appendChild(messageBody)
+
+            card.setAttribute('id', id)
+            cards[id] = {
+                card: card,
+                body: messageBody,
+                title: cardTitle
+            }
+        }
 
         var handlers = {
             connected: function (data) {
@@ -120,19 +146,41 @@
                 elem.removeAttribute('disabled')
             },
             server_add: function (data) {
+                var id = `server-${data.port}`
+                createCard(`Server connection ${data.address}:${data.port}`, id)
+                service.appendChild(cards[id].card)
+                createTextCard(cards[id].body, 'message', 'Wait for messages')
                 
             },
             server_send: function (data) {
+                var id = `server-${data.port}`
+                var items = data.message.split(',')
+                createTextCard(cards[id].body, 'message', `Connection from ${items[2]} (${items[0]}:${items[1]}), delay ${data.delay}s`)
+            },
 
-            },
             worker_ready: function (data) {
-                
+                var id = data.args[0]
+                createCard(id, id)
+                clients.appendChild(cards[id].card)
+                createTextCard(cards[id].body, 'message', 'Worker ready')
             },
+
             worker_wait_start: function (data) {
-                
+                var id = data.args[1]
+                createTextCard(cards[id].body, 'message', `Worker wait start ${data.args[0]}s`, 'text-primary')
             },
-            worker_result: function () {
-                
+
+            worker_wait_result: function (data) {
+                var id = data.args[0]
+                createTextCard(cards[id].body, 'message', `Worker wait result`, 'text-info')
+            },
+
+            worker_result: function (data) {
+                var id = data.args[1]
+                createTextCard(cards[id].body, 'message', `Worker result ${data.args[0]}`,
+                    data.args[0] === 'handled' ? 'text-success' : 'text-danger'
+                )
+
             }
         };
 

@@ -53,6 +53,7 @@ async def main(config: 'Config', loop: 'asyncio.AbstractEventLoop', result_queue
                 sleep_for = random.randint(1, config.client_max_delay)
                 tasks_queue.put_nowait(sleep_for)
             await tasks_queue.join()
+            await asyncio.sleep(5)
     except KeyboardInterrupt:
         for task in tasks:
             task.cancel()
