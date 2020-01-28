@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List, Dict, Optional
 import socket
 import select
 
-from config import Config
+from lib.config import Config
 
 if TYPE_CHECKING:
     from select import epoll

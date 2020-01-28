@@ -6,13 +6,13 @@ from typing import Union, Optional, Awaitable
 import tornado.ioloop
 import tornado.web
 import random
-from client import main as clients_start
+from lib.client import main as clients_start
 from tornado.websocket import WebSocketHandler as TornadoWebSocketHandler
 from tornado.tcpserver import TCPServer
 from tornado.iostream import StreamClosedError
 from tornado.queues import Queue
 from tornado import gen
-from config import Config
+from lib.config import Config
 
 
 END_SYMBOL = b'#'

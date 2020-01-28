@@ -4,7 +4,7 @@
 """
 import random
 import asyncio
-from config import Config
+from lib.config import Config
 
 
 async def worker(
